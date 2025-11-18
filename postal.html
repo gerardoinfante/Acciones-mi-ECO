@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Postal - Compártenos en qué programas participaste este año</title>
+  <title>Postal - Creciendo con cada experiencia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -129,13 +129,6 @@
       transform: translateY(-2px);
     }
 
-    .output {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
     .preview {
       max-width: 360px;
       width: 100%;
@@ -153,313 +146,267 @@
       border: 1px solid #4b5563;
       color: #e5e7eb;
     }
-
-    small {
-      color: #9ca3af;
-      font-size: 12px;
-      text-align: center;
-      max-width: 520px;
-    }
   </style>
 </head>
+
 <body>
-  <h1>📸 Impulsamos y desarrollamos al Talento interno</h1>
-  <p style="max-width: 520px; text-align:center; font-size: 14px; color:#9ca3af;">
-    Escribe tu nombre, selecciona las iniciativas de Desarrollo y Crecimiento en las que participaste y genera tu postal lista para compartir en redes.
+  <h1>📸 Creciendo con cada experiencia</h1>
+  <p style="max-width:520px;text-align:center;color:#9ca3af;">
+    Escribe tu nombre, selecciona las iniciativas en las que participaste y genera tu postal lista para compartir en redes.
   </p>
 
   <div class="card">
     <div class="field">
-      <label for="name">Nombre que se mostrará en la postal:</label>
+      <label for="name">Nombre en la postal:</label>
       <input type="text" id="name" placeholder="Ej. Gerardo Infante" />
     </div>
 
     <div class="field">
-      <label for="themeSelect">Tema:</label>
-      <select id="themeSelect" disabled>
-        <option value="desarrollo">Desarrollo y crecimiento (Tema 1)</option>
+      <label>Tema:</label>
+      <select disabled>
+        <option>Desarrollo y Crecimiento</option>
       </select>
-      <span style="font-size:11px; color:#6b7280;">Los demás temas se agregarán próximamente.</span>
     </div>
 
     <div class="field">
-      <label>Selecciona las iniciativas de este tema:</label>
+      <label>Selecciona iniciativas:</label>
       <div class="initiatives-container">
-        <div id="initiativesGrid" class="initiatives-grid">
-          <!-- Se llenará vía JS -->
-        </div>
+        <div id="initiativesGrid" class="initiatives-grid"></div>
       </div>
     </div>
 
     <button id="generateBtn">Generar postal</button>
   </div>
 
-  <div class="output" id="output" style="display:none;">
-    <h2 style="font-size:16px; margin:0;">Vista previa</h2>
-    <img id="previewImage" class="preview" alt="Vista previa de la postal" />
+  <div id="output" style="display:none;">
+    <h2 style="font-size:16px;margin:10px 0;">Vista previa</h2>
+    <img id="previewImage" class="preview" />
+    <br>
     <a id="downloadLink" class="download-link" download="mi_postal.png">⬇️ Descargar postal</a>
   </div>
 
   <canvas id="cardCanvas" width="1080" height="1080" style="display:none;"></canvas>
 
-  <small>
-    Versión preliminar enfocada en el Tema 1: Desarrollo y Crecimiento. Puedes agregar más temas e iniciativas más adelante.
-  </small>
+<script>
+/* ---------------------------
+   DEFINICIÓN DEL TEMA 1
+----------------------------- */
+const THEMES = {
+  desarrollo: {
+    displayName: "Desarrollo y Crecimiento",
+    initiatives: [
+      { id: "english_tec", label: "English@Tec", img: "img/english@tec-logo-blanco.png" },
+      { id: "mi_perfil", label: "Mi Perfil", img: "img/miPerfil-logo-blanco.png" },
+      { id: "odc", label: "ODC", img: "img/ODC-logo-blanco.png" },
+      { id: "oferta_desarrollo", label: "Oferta de Desarrollo", img: "img/OfertaDesarrollo-logo-blanco.png" }
+    ]
+  }
+};
 
-  <script>
-     // Tema 1: Desarrollo y Crecimiento
-    const THEMES = {
-      desarrollo: {
-        displayName: "Desarrollo y crecimiento",
-        initiatives: [
-          {
-            id: "english_tec",
-            label: "English@Tec",
-            img: "img/english@tec-logo-blanco.png",
-            caption: "English@Tec"
-          },
-          {
-            id: "mi_perfil",
-            label: "Mi Perfil",
-            img: "img/miPerfil-logo-blanco.png",
-            caption: "Mi Perfil"
-          },
-          {
-            id: "odc",
-            label: "ODC",
-            img: "img/ODC-logo-blanco.png",
-            caption: "ODC"
-          },
-          {
-            id: "oferta_desarrollo",
-            label: "Oferta de Desarrollo",
-            img: "img/OfertaDesarrollo-logo-blanco.png",
-            caption: "Oferta de Desarrollo"
-          }
-        ]
-      }
+const initiativesGrid = document.getElementById("initiativesGrid");
+const canvas = document.getElementById("cardCanvas");
+const ctx = canvas.getContext("2d");
+const previewImage = document.getElementById("previewImage");
+const downloadLink = document.getElementById("downloadLink");
+const output = document.getElementById("output");
+
+/* ---------------------------
+    RENDER TARJETAS
+----------------------------- */
+function renderInitiatives() {
+  const theme = THEMES["desarrollo"];
+  initiativesGrid.innerHTML = "";
+
+  theme.initiatives.forEach(init => {
+    const wrapper = document.createElement("div");
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = `init-${init.id}`;
+    input.className = "initiative-input";
+    input.dataset.img = init.img;
+    input.dataset.label = init.label;
+
+    const label = document.createElement("label");
+    label.className = "initiative-card";
+    label.setAttribute("for", input.id);
+
+    const img = document.createElement("img");
+    img.src = init.img;
+
+    const caption = document.createElement("span");
+    caption.textContent = init.label;
+
+    label.appendChild(img);
+    label.appendChild(caption);
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(label);
+
+    initiativesGrid.appendChild(wrapper);
+  });
+}
+
+/* ---------------------------
+  CARGA IMÁGENES DE LOGOS
+----------------------------- */
+function loadLogos(selectedInfos, callback) {
+  if (!selectedInfos.length) return callback([]);
+
+  const results = [];
+  let loaded = 0;
+
+  selectedInfos.forEach((info, index) => {
+    const img = new Image();
+    img.src = info.img;
+
+    img.onload = () => {
+      results[index] = { img, label: info.label };
+      loaded++;
+      if (loaded === selectedInfos.length) callback(results);
     };
 
-    const themeSelect = document.getElementById("themeSelect");
-    const initiativesGrid = document.getElementById("initiativesGrid");
-    const generateBtn = document.getElementById("generateBtn");
-    const canvas = document.getElementById("cardCanvas");
-    const ctx = canvas.getContext("2d");
-    const previewImage = document.getElementById("previewImage");
-    const downloadLink = document.getElementById("downloadLink");
-    const output = document.getElementById("output");
+    img.onerror = () => {
+      loaded++;
+      if (loaded === selectedInfos.length) callback(results.filter(Boolean));
+    };
+  });
+}
 
-    // Renderiza las iniciativas para el tema de desarrollo
-    function renderInitiatives(themeKey) {
-      const theme = THEMES[themeKey];
-      if (!theme) return;
+/* ---------------------------
+   DIBUJA LA POSTAL
+----------------------------- */
+function drawCard(logoImages) {
+  const w = canvas.width;
+  const h = canvas.height;
 
-      initiativesGrid.innerHTML = "";
+  // Fondo degradado
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, "#0f172a");
+  grad.addColorStop(1, "#1e293b");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
 
-      theme.initiatives.forEach((init) => {
-        const wrapper = document.createElement("div");
+  // Marco
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+  ctx.lineWidth = 12;
+  ctx.strokeRect(40, 40, w - 80, h - 80);
 
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.id = `init-${init.id}`;
-        input.className = "initiative-input";
-        input.setAttribute("data-label", init.label);
-        input.setAttribute("data-img", init.img);
+  // Título
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "bold 72px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText("Creciendo con", w / 2, 160);
+  ctx.fillText("cada experiencia", w / 2, 240);
 
-        const label = document.createElement("label");
-        label.className = "initiative-card";
-        label.setAttribute("for", input.id);
+  // Nombre
+  const name = document.getElementById("name").value.trim() || "Colaborador Tec";
+  ctx.font = "500 40px system-ui";
+  ctx.fillStyle = "#a5b4fc";
+  ctx.fillText(name, w / 2, 310);
 
-        const img = document.createElement("img");
-        img.src = init.img;
-        img.alt = init.label;
+  // Tema
+  ctx.font = "28px system-ui";
+  ctx.fillStyle = "#cbd5f5";
+  ctx.fillText("Tema: Desarrollo y Crecimiento", w / 2, 360);
 
-        const caption = document.createElement("span");
-        caption.textContent = init.caption || "";
+  /* ---------------------------
+        LOGOS EN FORMATO GRID
+  ----------------------------- */
+  const logos = logoImages || [];
+  const maxLogos = Math.min(logos.length, 4);
+  const logoSize = 220;
 
-        label.appendChild(img);
-        label.appendChild(caption);
+  if (maxLogos === 0) {
+    ctx.textAlign = "left";
+    ctx.font = "30px system-ui";
+    ctx.fillStyle = "#e5e7eb";
+    ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, 450);
+  } else {
+    let positions;
 
-        wrapper.appendChild(input);
-        wrapper.appendChild(label);
-
-        initiativesGrid.appendChild(wrapper);
-      });
+    if (maxLogos === 1) {
+      positions = [{ x: (w - logoSize) / 2, y: 430 }];
+    } else if (maxLogos === 2) {
+      positions = [
+        { x: w / 2 - logoSize - 30, y: 430 },
+        { x: w / 2 + 30, y: 430 }
+      ];
+    } else if (maxLogos === 3) {
+      positions = [
+        { x: w / 2 - logoSize - 30, y: 430 },
+        { x: w / 2 + 30, y: 430 },
+        { x: (w - logoSize) / 2, y: 430 + logoSize + 30 }
+      ];
+    } else {
+      positions = [
+        { x: w / 2 - logoSize - 30, y: 430 },
+        { x: w / 2 + 30, y: 430 },
+        { x: w / 2 - logoSize - 30, y: 430 + logoSize + 30 },
+        { x: w / 2 + 30, y: 430 + logoSize + 30 }
+      ];
     }
 
-    // Carga un conjunto de imágenes y llama al callback cuando todas están listas
-    function loadLogoImages(selectedInfos, callback) {
-      if (selectedInfos.length === 0) {
-        callback([]);
-        return;
-      }
+    logos.slice(0, 4).forEach((info, i) => {
+      const img = info.img;
+      const pos = positions[i];
 
-      let loaded = 0;
-      const results = new Array(selectedInfos.length);
+      const maxW = logoSize;
+      const maxH = logoSize;
 
-      selectedInfos.forEach((info, index) => {
-        const img = new Image();
-        img.src = info.img;
-        img.onload = () => {
-          results[index] = { img, label: info.label };
-          loaded++;
-          if (loaded === selectedInfos.length) callback(results);
-        };
-        img.onerror = () => {
-          // si alguna falla, simplemente la omitimos
-          loaded++;
-          if (loaded === selectedInfos.length) {
-            callback(results.filter(Boolean));
-          }
-        };
-      });
-    }
+      const realW = img.width;
+      const realH = img.height;
+      const ratio = realW / realH;
 
-    // Dibuja la postal en el canvas, con fondo y logos
-    function drawCard(backgroundImage, logoImages) {
-      const width = canvas.width;
-      const height = canvas.height;
+      let drawW, drawH;
 
-      // Fondo
-      if (backgroundImage) {
-        ctx.drawImage(backgroundImage, 0, 0, width, height);
-        // capa oscura para que los textos se lean
-        ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
-        ctx.fillRect(0, 0, width, height);
+      if (ratio > 1) {
+        drawW = maxW;
+        drawH = maxW / ratio;
       } else {
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, "#0f172a");
-        gradient.addColorStop(1, "#1e293b");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
+        drawH = maxH;
+        drawW = maxH * ratio;
       }
 
-      // Marco
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
-      ctx.lineWidth = 12;
-      ctx.strokeRect(40, 40, width - 80, height - 80);
+      const finalX = pos.x + (maxW - drawW) / 2;
+      const finalY = pos.y + (maxH - drawH) / 2;
 
-      // Título
-      ctx.fillStyle = "#e5e7eb";
-      ctx.font = "bold 72px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("Creciendo con", width / 2, 160);
-      ctx.fillText("cada experiencia", width / 2, 240);
-
-      // Nombre
-      const nameInput = document.getElementById("name");
-      const name = nameInput.value.trim() || "Colaborador Tec";
-
-      ctx.font = "500 40px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      ctx.fillStyle = "#a5b4fc";
-      ctx.fillText(name, width / 2, 310);
-
-      // Tema
-      const themeKey = "desarrollo";
-      const theme = THEMES[themeKey];
-      const themeName = theme ? theme.displayName : "";
-
-      ctx.font = "28px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      ctx.fillStyle = "#cbd5f5";
-      ctx.fillText(`Tema: ${themeName}`, width / 2, 360);
-
-      // Logos seleccionados
-      const logos = logoImages || [];
-      if (logos.length === 0) {
-        // Mensaje si no seleccionó nada
-        ctx.textAlign = "left";
-        ctx.font = "30px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-        ctx.fillStyle = "#e5e7eb";
-        ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, 450);
-      } else {
-        // Dibujar hasta 4 logos en una cuadrícula
-        const maxLogos = Math.min(logos.length, 4);
-        const logoSize = 220;
-
-        let positions;
-
-        if (maxLogos === 1) {
-          positions = [
-            { x: (width - logoSize) / 2, y: 430 }
-          ];
-        } else if (maxLogos === 2) {
-          positions = [
-            { x: width / 2 - logoSize - 30, y: 430 },
-            { x: width / 2 + 30, y: 430 }
-          ];
-        } else if (maxLogos === 3) {
-          positions = [
-            { x: width / 2 - logoSize - 30, y: 430 },
-            { x: width / 2 + 30, y: 430 },
-            { x: (width - logoSize) / 2, y: 430 + logoSize + 30 }
-          ];
-        } else {
-          // 4 logos: 2x2
-          positions = [
-            { x: width / 2 - logoSize - 30, y: 430 },
-            { x: width / 2 + 30, y: 430 },
-            { x: width / 2 - logoSize - 30, y: 430 + logoSize + 30 },
-            { x: width / 2 + 30, y: 430 + logoSize + 30 }
-          ];
-        }
-
-        for (let i = 0; i < maxLogos; i++) {
-          const { img } = logos[i];
-          const { x, y } = positions[i];
-          ctx.drawImage(img, x, y, logoSize, logoSize);
-        }
-      }
-
-      // Footer
-      ctx.textAlign = "center";
-      ctx.font = "24px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      ctx.fillStyle = "#9ca3af";
-      ctx.fillText("Cerrando el año creciendo con cada experiencia", width / 2, height - 120);
-      ctx.fillStyle = "#6ee7b7";
-      ctx.fillText("#TalentoTec #CreciendoConCadaExperiencia", width / 2, height - 70);
-    }
-
-    generateBtn.addEventListener("click", () => {
-      // 1. Obtener qué iniciativas están seleccionadas
-      const selectedInputs = Array.from(
-        document.querySelectorAll(".initiative-input")
-      ).filter((input) => input.checked);
-
-      const selectedInfos = selectedInputs.map((input) => ({
-        label: input.getAttribute("data-label") || "Iniciativa",
-        img: input.getAttribute("data-img")
-      }));
-
-      // 2. Cargar el fondo (background.png) si existe
-      const bg = new Image();
-      bg.src = "img/background.png";
-
-      const finalize = (backgroundImage, logoImages) => {
-        drawCard(backgroundImage, logoImages);
-        try {
-          const dataUrl = canvas.toDataURL("image/png");
-          previewImage.src = dataUrl;
-          downloadLink.href = dataUrl;
-          output.style.display = "flex";
-        } catch (e) {
-          alert("Tu navegador bloqueó la descarga de la imagen.");
-        }
-      };
-
-      // Cargamos logos primero, para ya tenerlos listos
-      loadLogoImages(selectedInfos, (logoImages) => {
-        bg.onload = () => {
-          finalize(bg, logoImages);
-        };
-        bg.onerror = () => {
-          // Si falla el fondo, usamos sólo degradado
-          finalize(null, logoImages);
-        };
-      });
+      ctx.drawImage(img, finalX, finalY, drawW, drawH);
     });
+  }
 
-    // Render inicial para Tema 1
-    renderInitiatives("desarrollo");
-  </script>
+  // Footer
+  ctx.textAlign = "center";
+  ctx.font = "24px system-ui";
+  ctx.fillStyle = "#9ca3af";
+  ctx.fillText("Cerrando el año creciendo con cada experiencia", w / 2, h - 120);
+  ctx.fillStyle = "#6ee7b7";
+  ctx.fillText("#TalentoTec #CreciendoConCadaExperiencia", w / 2, h - 70);
+}
+
+/* ---------------------------
+      AL GENERAR POSTAL
+----------------------------- */
+document.getElementById("generateBtn").addEventListener("click", () => {
+
+  const selectedInputs = [...document.querySelectorAll(".initiative-input")]
+    .filter(i => i.checked)
+    .map(i => ({ img: i.dataset.img, label: i.dataset.label }));
+
+  loadLogos(selectedInputs, (logoImages) => {
+    drawCard(logoImages);
+
+    const dataURL = canvas.toDataURL("image/png");
+    previewImage.src = dataURL;
+    downloadLink.href = dataURL;
+    output.style.display = "block";
+  });
+
+});
+
+/* Inicializa */
+renderInitiatives();
+</script>
+
 </body>
 </html>
