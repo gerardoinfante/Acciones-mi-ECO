@@ -207,7 +207,7 @@
   </small>
 
   <script>
-    // Tema 1: Desarrollo y Crecimiento
+     // Tema 1: Desarrollo y Crecimiento
     const THEMES = {
       desarrollo: {
         displayName: "Desarrollo y crecimiento",
@@ -249,6 +249,7 @@
     const downloadLink = document.getElementById("downloadLink");
     const output = document.getElementById("output");
 
+    // Renderiza las iniciativas para el tema de desarrollo
     function renderInitiatives(themeKey) {
       const theme = THEMES[themeKey];
       if (!theme) return;
@@ -263,6 +264,7 @@
         input.id = `init-${init.id}`;
         input.className = "initiative-input";
         input.setAttribute("data-label", init.label);
+        input.setAttribute("data-img", init.img);
 
         const label = document.createElement("label");
         label.className = "initiative-card";
@@ -285,13 +287,43 @@
       });
     }
 
-    function drawCard(backgroundImage) {
+    // Carga un conjunto de imágenes y llama al callback cuando todas están listas
+    function loadLogoImages(selectedInfos, callback) {
+      if (selectedInfos.length === 0) {
+        callback([]);
+        return;
+      }
+
+      let loaded = 0;
+      const results = new Array(selectedInfos.length);
+
+      selectedInfos.forEach((info, index) => {
+        const img = new Image();
+        img.src = info.img;
+        img.onload = () => {
+          results[index] = { img, label: info.label };
+          loaded++;
+          if (loaded === selectedInfos.length) callback(results);
+        };
+        img.onerror = () => {
+          // si alguna falla, simplemente la omitimos
+          loaded++;
+          if (loaded === selectedInfos.length) {
+            callback(results.filter(Boolean));
+          }
+        };
+      });
+    }
+
+    // Dibuja la postal en el canvas, con fondo y logos
+    function drawCard(backgroundImage, logoImages) {
       const width = canvas.width;
       const height = canvas.height;
 
+      // Fondo
       if (backgroundImage) {
         ctx.drawImage(backgroundImage, 0, 0, width, height);
-        // capa oscura suave para que se lean los textos
+        // capa oscura para que los textos se lean
         ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
         ctx.fillRect(0, 0, width, height);
       } else {
@@ -331,26 +363,51 @@
       ctx.fillStyle = "#cbd5f5";
       ctx.fillText(`Tema: ${themeName}`, width / 2, 360);
 
-      // Iniciativas seleccionadas
-      const selectedInputs = Array.from(
-        document.querySelectorAll(".initiative-input")
-      ).filter((input) => input.checked);
-
-      const startY = 430;
-      const lineHeight = 56;
-
-      ctx.textAlign = "left";
-      ctx.font = "30px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      ctx.fillStyle = "#e5e7eb";
-
-      if (selectedInputs.length === 0) {
-        ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, startY);
+      // Logos seleccionados
+      const logos = logoImages || [];
+      if (logos.length === 0) {
+        // Mensaje si no seleccionó nada
+        ctx.textAlign = "left";
+        ctx.font = "30px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, 450);
       } else {
-        selectedInputs.slice(0, 7).forEach((input, index) => {
-          const y = startY + index * lineHeight;
-          const label = input.getAttribute("data-label") || "Iniciativa";
-          ctx.fillText(`• ${label}`, 140, y);
-        });
+        // Dibujar hasta 4 logos en una cuadrícula
+        const maxLogos = Math.min(logos.length, 4);
+        const logoSize = 220;
+
+        let positions;
+
+        if (maxLogos === 1) {
+          positions = [
+            { x: (width - logoSize) / 2, y: 430 }
+          ];
+        } else if (maxLogos === 2) {
+          positions = [
+            { x: width / 2 - logoSize - 30, y: 430 },
+            { x: width / 2 + 30, y: 430 }
+          ];
+        } else if (maxLogos === 3) {
+          positions = [
+            { x: width / 2 - logoSize - 30, y: 430 },
+            { x: width / 2 + 30, y: 430 },
+            { x: (width - logoSize) / 2, y: 430 + logoSize + 30 }
+          ];
+        } else {
+          // 4 logos: 2x2
+          positions = [
+            { x: width / 2 - logoSize - 30, y: 430 },
+            { x: width / 2 + 30, y: 430 },
+            { x: width / 2 - logoSize - 30, y: 430 + logoSize + 30 },
+            { x: width / 2 + 30, y: 430 + logoSize + 30 }
+          ];
+        }
+
+        for (let i = 0; i < maxLogos; i++) {
+          const { img } = logos[i];
+          const { x, y } = positions[i];
+          ctx.drawImage(img, x, y, logoSize, logoSize);
+        }
       }
 
       // Footer
@@ -363,25 +420,42 @@
     }
 
     generateBtn.addEventListener("click", () => {
+      // 1. Obtener qué iniciativas están seleccionadas
+      const selectedInputs = Array.from(
+        document.querySelectorAll(".initiative-input")
+      ).filter((input) => input.checked);
+
+      const selectedInfos = selectedInputs.map((input) => ({
+        label: input.getAttribute("data-label") || "Iniciativa",
+        img: input.getAttribute("data-img")
+      }));
+
+      // 2. Cargar el fondo (background.png) si existe
       const bg = new Image();
       bg.src = "img/background.png";
 
-      bg.onload = () => {
-        drawCard(bg);
-        const dataUrl = canvas.toDataURL("image/png");
-        previewImage.src = dataUrl;
-        downloadLink.href = dataUrl;
-        output.style.display = "flex";
+      const finalize = (backgroundImage, logoImages) => {
+        drawCard(backgroundImage, logoImages);
+        try {
+          const dataUrl = canvas.toDataURL("image/png");
+          previewImage.src = dataUrl;
+          downloadLink.href = dataUrl;
+          output.style.display = "flex";
+        } catch (e) {
+          alert("Tu navegador bloqueó la descarga de la imagen.");
+        }
       };
 
-      bg.onerror = () => {
-        // si falla el fondo, usamos degradado
-        drawCard(null);
-        const dataUrl = canvas.toDataURL("image/png");
-        previewImage.src = dataUrl;
-        downloadLink.href = dataUrl;
-        output.style.display = "flex";
-      };
+      // Cargamos logos primero, para ya tenerlos listos
+      loadLogoImages(selectedInfos, (logoImages) => {
+        bg.onload = () => {
+          finalize(bg, logoImages);
+        };
+        bg.onerror = () => {
+          // Si falla el fondo, usamos sólo degradado
+          finalize(null, logoImages);
+        };
+      });
     });
 
     // Render inicial para Tema 1
