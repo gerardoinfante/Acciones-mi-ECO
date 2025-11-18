@@ -211,6 +211,16 @@ const downloadLink = document.getElementById("downloadLink");
 const output = document.getElementById("output");
 
 /* ---------------------------
+   BACKGROUND GLOBAL
+----------------------------- */
+let backgroundImg = new Image();
+let backgroundLoaded = false;
+
+backgroundImg.src = "img/background.png";
+backgroundImg.onload = () => { backgroundLoaded = true; };
+backgroundImg.onerror = () => { backgroundLoaded = false; };
+
+/* ---------------------------
     RENDER TARJETAS
 ----------------------------- */
 function renderInitiatives() {
@@ -280,12 +290,19 @@ function drawCard(logoImages) {
   const w = canvas.width;
   const h = canvas.height;
 
-  // Fondo degradado
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, "#0f172a");
-  grad.addColorStop(1, "#1e293b");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
+  // Fondo: primero imagen, si está cargada; si no, degradado
+  if (backgroundLoaded) {
+    ctx.drawImage(backgroundImg, 0, 0, w, h);
+    // Capa oscura para que se lea el texto
+    ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, "#0f172a");
+    grad.addColorStop(1, "#1e293b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
 
   // Marco
   ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
