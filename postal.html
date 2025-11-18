@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Postal - Compártenos en qué programas participaste este año</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 16px 20px 20px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border: 1px solid #1f2937;
+    }
+
+    label {
+      font-size: 14px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    input[type="text"],
+    select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
+      color: #020617;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(34, 197, 94, 0.35);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2);
+    }
+
+    .initiatives-container {
+      border-radius: 12px;
+      border: 1px dashed #4b5563;
+      padding: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .initiatives-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+    }
+
+    .initiative-input {
+      display: none;
+    }
+
+    .initiative-card {
+      position: relative;
+      border-radius: 12px;
+      border: 1px solid #374151;
+      padding: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: radial-gradient(circle at top, #1f2937, #020617);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+    }
+
+    .initiative-card img {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .initiative-card span {
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .initiative-input:checked + .initiative-card {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .output {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preview {
+      max-width: 360px;
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid #1f2937;
+      background: #020617;
+    }
+
+    .download-link {
+      text-decoration: none;
+      font-size: 14px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      color: #e5e7eb;
+    }
+
+    small {
+      color: #9ca3af;
+      font-size: 12px;
+      text-align: center;
+      max-width: 520px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 Impulsamos y desarrollamos al Talento interno</h1>
+  <p style="max-width: 520px; text-align:center; font-size: 14px; color:#9ca3af;">
+    Escribe tu nombre, selecciona las iniciativas de Desarrollo y Crecimiento en las que participaste y genera tu postal lista para compartir en redes.
+  </p>
+
+  <div class="card">
+    <div class="field">
+      <label for="name">Nombre que se mostrará en la postal:</label>
+      <input type="text" id="name" placeholder="Ej. Gerardo Infante" />
+    </div>
+
+    <div class="field">
+      <label for="themeSelect">Tema:</label>
+      <select id="themeSelect" disabled>
+        <option value="desarrollo">Desarrollo y crecimiento (Tema 1)</option>
+      </select>
+      <span style="font-size:11px; color:#6b7280;">Los demás temas se agregarán próximamente.</span>
+    </div>
+
+    <div class="field">
+      <label>Selecciona las iniciativas de este tema:</label>
+      <div class="initiatives-container">
+        <div id="initiativesGrid" class="initiatives-grid">
+          <!-- Se llenará vía JS -->
+        </div>
+      </div>
+    </div>
+
+    <button id="generateBtn">Generar postal</button>
+  </div>
+
+  <div class="output" id="output" style="display:none;">
+    <h2 style="font-size:16px; margin:0;">Vista previa</h2>
+    <img id="previewImage" class="preview" alt="Vista previa de la postal" />
+    <a id="downloadLink" class="download-link" download="mi_postal.png">⬇️ Descargar postal</a>
+  </div>
+
+  <canvas id="cardCanvas" width="1080" height="1080" style="display:none;"></canvas>
+
+  <small>
+    Versión preliminar enfocada en el Tema 1: Desarrollo y Crecimiento. Puedes agregar más temas e iniciativas más adelante.
+  </small>
+
+  <script>
+    // Tema 1: Desarrollo y Crecimiento
+    const THEMES = {
+      desarrollo: {
+        displayName: "Desarrollo y crecimiento",
+        initiatives: [
+          {
+            id: "english_tec",
+            label: "English@Tec",
+            img: "img/english@tec-logo-blanco.png",
+            caption: "English@Tec"
+          },
+          {
+            id: "mi_perfil",
+            label: "Mi Perfil",
+            img: "img/miPerfil-logo-blanco.png",
+            caption: "Mi Perfil"
+          },
+          {
+            id: "odc",
+            label: "ODC",
+            img: "img/ODC-logo-blanco.png",
+            caption: "ODC"
+          },
+          {
+            id: "oferta_desarrollo",
+            label: "Oferta de Desarrollo",
+            img: "img/OfertaDesarrollo-logo-blanco.png",
+            caption: "Oferta de Desarrollo"
+          }
+        ]
+      }
+    };
+
+    const themeSelect = document.getElementById("themeSelect");
+    const initiativesGrid = document.getElementById("initiativesGrid");
+    const generateBtn = document.getElementById("generateBtn");
+    const canvas = document.getElementById("cardCanvas");
+    const ctx = canvas.getContext("2d");
+    const previewImage = document.getElementById("previewImage");
+    const downloadLink = document.getElementById("downloadLink");
+    const output = document.getElementById("output");
+
+    function renderInitiatives(themeKey) {
+      const theme = THEMES[themeKey];
+      if (!theme) return;
+
+      initiativesGrid.innerHTML = "";
+
+      theme.initiatives.forEach((init) => {
+        const wrapper = document.createElement("div");
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = `init-${init.id}`;
+        input.className = "initiative-input";
+        input.setAttribute("data-label", init.label);
+
+        const label = document.createElement("label");
+        label.className = "initiative-card";
+        label.setAttribute("for", input.id);
+
+        const img = document.createElement("img");
+        img.src = init.img;
+        img.alt = init.label;
+
+        const caption = document.createElement("span");
+        caption.textContent = init.caption || "";
+
+        label.appendChild(img);
+        label.appendChild(caption);
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(label);
+
+        initiativesGrid.appendChild(wrapper);
+      });
+    }
+
+    function drawCard(backgroundImage) {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      if (backgroundImage) {
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
+        // capa oscura suave para que se lean los textos
+        ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, "#0f172a");
+        gradient.addColorStop(1, "#1e293b");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      // Marco
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+      ctx.lineWidth = 12;
+      ctx.strokeRect(40, 40, width - 80, height - 80);
+
+      // Título
+      ctx.fillStyle = "#e5e7eb";
+      ctx.font = "bold 72px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Creciendo con", width / 2, 160);
+      ctx.fillText("cada experiencia", width / 2, 240);
+
+      // Nombre
+      const nameInput = document.getElementById("name");
+      const name = nameInput.value.trim() || "Colaborador Tec";
+
+      ctx.font = "500 40px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.fillStyle = "#a5b4fc";
+      ctx.fillText(name, width / 2, 310);
+
+      // Tema
+      const themeKey = "desarrollo";
+      const theme = THEMES[themeKey];
+      const themeName = theme ? theme.displayName : "";
+
+      ctx.font = "28px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.fillStyle = "#cbd5f5";
+      ctx.fillText(`Tema: ${themeName}`, width / 2, 360);
+
+      // Iniciativas seleccionadas
+      const selectedInputs = Array.from(
+        document.querySelectorAll(".initiative-input")
+      ).filter((input) => input.checked);
+
+      const startY = 430;
+      const lineHeight = 56;
+
+      ctx.textAlign = "left";
+      ctx.font = "30px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.fillStyle = "#e5e7eb";
+
+      if (selectedInputs.length === 0) {
+        ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, startY);
+      } else {
+        selectedInputs.slice(0, 7).forEach((input, index) => {
+          const y = startY + index * lineHeight;
+          const label = input.getAttribute("data-label") || "Iniciativa";
+          ctx.fillText(`• ${label}`, 140, y);
+        });
+      }
+
+      // Footer
+      ctx.textAlign = "center";
+      ctx.font = "24px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.fillStyle = "#9ca3af";
+      ctx.fillText("Cerrando el año creciendo con cada experiencia", width / 2, height - 120);
+      ctx.fillStyle = "#6ee7b7";
+      ctx.fillText("#TalentoTec #CreciendoConCadaExperiencia", width / 2, height - 70);
+    }
+
+    generateBtn.addEventListener("click", () => {
+      const bg = new Image();
+      bg.src = "img/background.png";
+
+      bg.onload = () => {
+        drawCard(bg);
+        const dataUrl = canvas.toDataURL("image/png");
+        previewImage.src = dataUrl;
+        downloadLink.href = dataUrl;
+        output.style.display = "flex";
+      };
+
+      bg.onerror = () => {
+        // si falla el fondo, usamos degradado
+        drawCard(null);
+        const dataUrl = canvas.toDataURL("image/png");
+        previewImage.src = dataUrl;
+        downloadLink.href = dataUrl;
+        output.style.display = "flex";
+      };
+    });
+
+    // Render inicial para Tema 1
+    renderInitiatives("desarrollo");
+  </script>
+</body>
+</html>
