@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Postal - Compártenos, ¿en qué programas participaste este año?</title>
+  <title>Postal - Programas que me marcaron este año</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -43,13 +43,20 @@
     }
 
     input[type="text"],
-    select {
+    select,
+    textarea {
       padding: 8px 10px;
       border-radius: 8px;
       border: 1px solid #4b5563;
       background: #020617;
       color: #e5e7eb;
       font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      max-height: 120px;
     }
 
     button {
@@ -146,13 +153,18 @@
       border: 1px solid #4b5563;
       color: #e5e7eb;
     }
+
+    .helper-text {
+      font-size: 11px;
+      color: #6b7280;
+    }
   </style>
 </head>
 
 <body>
-  <h1>📸 Programas en los que participé este año</h1>
+  <h1>📸 Programas que me marcaron este año</h1>
   <p style="max-width:520px;text-align:center;color:#9ca3af;">
-    Escribe tu nombre, selecciona las iniciativas en las que participaste y genera tu postal lista para compartir en redes.
+    Escribe tu nombre, deja un mensaje de cierre y selecciona los programas que marcaron tu año para generar tu postal lista para compartir en redes.
   </p>
 
   <div class="card">
@@ -162,14 +174,21 @@
     </div>
 
     <div class="field">
-      <label>Tema:</label>
-      <select disabled>
-        <option>Desarrollo y Crecimiento</option>
-      </select>
+      <label for="message">Mensaje de cierre (máx. 160 caracteres):</label>
+      <textarea id="message" maxlength="160" placeholder="Ej. Este año aposté por mi desarrollo y el de mi equipo."></textarea>
+      <span id="messageCounter" class="helper-text">0 / 160</span>
     </div>
 
     <div class="field">
-      <label>Selecciona iniciativas:</label>
+      <label>Tema:</label>
+      <select disabled>
+        <option>Programas que me marcaron este año</option>
+      </select>
+      <span class="helper-text">Próximamente podrás elegir otros temas.</span>
+    </div>
+
+    <div class="field">
+      <label>Selecciona programas:</label>
       <div class="initiatives-container">
         <div id="initiativesGrid" class="initiatives-grid"></div>
       </div>
@@ -193,7 +212,7 @@
 ----------------------------- */
 const THEMES = {
   desarrollo: {
-    displayName: "Desarrollo y Crecimiento",
+    displayName: "Programas que me marcaron este año",
     initiatives: [
       { id: "english_tec", label: "English@Tec", img: "img/english@tec-logo-blanco.png" },
       { id: "mi_perfil", label: "Mi Perfil", img: "img/miPerfil-logo-blanco.png" },
@@ -209,6 +228,8 @@ const ctx = canvas.getContext("2d");
 const previewImage = document.getElementById("previewImage");
 const downloadLink = document.getElementById("downloadLink");
 const output = document.getElementById("output");
+const messageInput = document.getElementById("message");
+const messageCounter = document.getElementById("messageCounter");
 
 /* ---------------------------
    BACKGROUND GLOBAL
@@ -219,6 +240,15 @@ let backgroundLoaded = false;
 backgroundImg.src = "img/background.png";
 backgroundImg.onload = () => { backgroundLoaded = true; };
 backgroundImg.onerror = () => { backgroundLoaded = false; };
+
+/* ---------------------------
+    CONTADOR DE CARACTERES
+----------------------------- */
+messageInput.addEventListener("input", () => {
+  const len = messageInput.value.length;
+  const max = messageInput.maxLength || 160;
+  messageCounter.textContent = `${len} / ${max}`;
+});
 
 /* ---------------------------
     RENDER TARJETAS
@@ -284,16 +314,52 @@ function loadLogos(selectedInfos, callback) {
 }
 
 /* ---------------------------
+   FUNCIÓN PARA HACER WRAP DE TEXTO
+----------------------------- */
+function wrapText(ctx, text, x, startY, maxWidth, lineHeight, maxLines) {
+  const words = text.split(/\s+/);
+  let line = "";
+  let y = startY;
+  let lines = 0;
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line ? line + " " + words[n] : words[n];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n];
+      y += lineHeight;
+      lines++;
+      if (lines >= maxLines - 1) {
+        const remaining = words.slice(n + 1).join(" ");
+        let last = line + (remaining ? " " + remaining : "");
+        while (ctx.measureText(last + "…").width > maxWidth && last.length > 0) {
+          last = last.slice(0, -1);
+        }
+        ctx.fillText(last + "…", x, y);
+        return y + lineHeight;
+      }
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+  return y;
+}
+
+/* ---------------------------
    DIBUJA LA POSTAL
 ----------------------------- */
 function drawCard(logoImages) {
   const w = canvas.width;
   const h = canvas.height;
 
-  // Fondo: primero imagen, si está cargada; si no, degradado
+  // Fondo
   if (backgroundLoaded) {
     ctx.drawImage(backgroundImg, 0, 0, w, h);
-    // Capa oscura para que se lea el texto
     ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
     ctx.fillRect(0, 0, w, h);
   } else {
@@ -311,21 +377,33 @@ function drawCard(logoImages) {
 
   // Título
   ctx.fillStyle = "#e5e7eb";
-  ctx.font = "bold 72px system-ui";
+  ctx.font = "bold 60px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText("Programas en los", w / 2, 160);
-  ctx.fillText("que participé este año", w / 2, 240);
+  ctx.fillText("Programas que me", w / 2, 150);
+  ctx.fillText("marcaron este año", w / 2, 220);
 
   // Nombre
   const name = document.getElementById("name").value.trim() || "Colaborador Tec";
   ctx.font = "500 40px system-ui";
   ctx.fillStyle = "#a5b4fc";
-  ctx.fillText(name, w / 2, 310);
+  ctx.fillText(name, w / 2, 290);
 
-  // Tema
-  ctx.font = "28px system-ui";
+  // "Tema" (subtítulo)
+  ctx.font = "26px system-ui";
   ctx.fillStyle = "#cbd5f5";
-  ctx.fillText("Tema: Desarrollo y Crecimiento", w / 2, 360);
+  ctx.fillText("Programas en los que participé", w / 2, 335);
+
+  // Mensaje de cierre
+  const rawMessage = messageInput.value.trim();
+  let logosStartY = 430;
+
+  if (rawMessage) {
+    ctx.font = "24px system-ui";
+    ctx.fillStyle = "#e5e7eb";
+    ctx.textAlign = "center";
+    const lastY = wrapText(ctx, rawMessage, w / 2, 380, w - 200, 32, 3);
+    logosStartY = lastY + 40;
+  }
 
   /* ---------------------------
         LOGOS EN FORMATO GRID
@@ -335,32 +413,34 @@ function drawCard(logoImages) {
   const logoSize = 220;
 
   if (maxLogos === 0) {
-    ctx.textAlign = "left";
-    ctx.font = "30px system-ui";
-    ctx.fillStyle = "#e5e7eb";
-    ctx.fillText("• Aún estoy por elegir mis próximas experiencias ✨", 140, 450);
+    if (!rawMessage) {
+      ctx.textAlign = "left";
+      ctx.font = "30px system-ui";
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillText("• Aún estoy por elegir los programas que me marcarán ✨", 140, logosStartY);
+    }
   } else {
     let positions;
 
     if (maxLogos === 1) {
-      positions = [{ x: (w - logoSize) / 2, y: 430 }];
+      positions = [{ x: (w - logoSize) / 2, y: logosStartY }];
     } else if (maxLogos === 2) {
       positions = [
-        { x: w / 2 - logoSize - 30, y: 430 },
-        { x: w / 2 + 30, y: 430 }
+        { x: w / 2 - logoSize - 30, y: logosStartY },
+        { x: w / 2 + 30, y: logosStartY }
       ];
     } else if (maxLogos === 3) {
       positions = [
-        { x: w / 2 - logoSize - 30, y: 430 },
-        { x: w / 2 + 30, y: 430 },
-        { x: (w - logoSize) / 2, y: 430 + logoSize + 30 }
+        { x: w / 2 - logoSize - 30, y: logosStartY },
+        { x: w / 2 + 30, y: logosStartY },
+        { x: (w - logoSize) / 2, y: logosStartY + logoSize + 30 }
       ];
     } else {
       positions = [
-        { x: w / 2 - logoSize - 30, y: 430 },
-        { x: w / 2 + 30, y: 430 },
-        { x: w / 2 - logoSize - 30, y: 430 + logoSize + 30 },
-        { x: w / 2 + 30, y: 430 + logoSize + 30 }
+        { x: w / 2 - logoSize - 30, y: logosStartY },
+        { x: w / 2 + 30, y: logosStartY },
+        { x: w / 2 - logoSize - 30, y: logosStartY + logoSize + 30 },
+        { x: w / 2 + 30, y: logosStartY + logoSize + 30 }
       ];
     }
 
@@ -396,9 +476,9 @@ function drawCard(logoImages) {
   ctx.textAlign = "center";
   ctx.font = "24px system-ui";
   ctx.fillStyle = "#9ca3af";
-  ctx.fillText("Programas en los que participé este año", w / 2, h - 120);
+  ctx.fillText("Cerrando el año con los programas que me marcaron", w / 2, h - 120);
   ctx.fillStyle = "#6ee7b7";
-  ctx.fillText("#AccionMiECO", w / 2, h - 70);
+  ctx.fillText("#ProgramasQueMeMarcaron #TalentoTec", w / 2, h - 70);
 }
 
 /* ---------------------------
@@ -423,6 +503,7 @@ document.getElementById("generateBtn").addEventListener("click", () => {
 
 /* Inicializa */
 renderInitiatives();
+messageCounter.textContent = `0 / ${messageInput.maxLength || 160}`;
 </script>
 
 </body>
